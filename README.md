@@ -1,4 +1,4 @@
-# Projet Flask
+# Projet Flask V0.0.1
 
 Ce projet est une application web construite avec Flask. Elle utilise Bulma pour le CSS et inclut des fichiers JavaScript pour des fonctionnalités supplémentaires.
 
