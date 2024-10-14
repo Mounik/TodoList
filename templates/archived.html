@@ -1,0 +1,33 @@
+<!-- templates/archived.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <title>Archived Tasks</title>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Archived Tasks</h1>
+            <div class="content">
+                <ul>
+                    {% for task in tasks %}
+                    <li class="box">
+                        {{ task.title }} (Created at: {{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }})
+                    </li>
+                    {% endfor %}
+                </ul>
+                <ul>
+                    {% for subtask in subtasks %}
+                    <li class="box">
+                        {{ subtask.title }} (Created at: {{ subtask.created_at.strftime('%Y-%m-%d %H:%M:%S') }})
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

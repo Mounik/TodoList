@@ -1,0 +1,170 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <title>Todo List</title>
+    <style>
+        .status-a-faire {
+            background-color: #f0f0f0; /* Gris clair */
+        }
+        .status-en-cours {
+            background-color: #d4edda; /* Vert */
+        }
+        .status-termine {
+            background-color: #f8d7da; /* Rouge */
+        }
+        .task-item, .subtask-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .subtask-item {
+            margin-left: 20px;
+        }
+        .subtask-form {
+            display: none;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title">Todo List</h1>
+            <form action="/add" method="POST">
+                <div class="field">
+                    <label class="label">New Task</label>
+                    <div class="control">
+                        <input class="input" type="text" name="title" placeholder="Task title">
+                    </div>
+                </div>
+                <div class="control">
+                    <button class="button is-primary" type="submit">Add Task</button>
+                </div>
+            </form>
+            <hr>
+            <div class="content">
+                <ul>
+                    {% for task in tasks %}
+                    <li class="box task-item {% if task.status == 'A faire' %}status-a-faire{% elif task.status == 'En cours' %}status-en-cours{% elif task.status == 'Terminé' %}status-termine{% endif %}">
+                        <div>
+                            <button class="button is-small is-info" onclick="toggleSubtaskForm({{ task.id }})" title="Créer une sous-tâche">
+                                <span class="icon is-small">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                            </button>
+                            <form action="/update_status/{{ task.id }}" method="POST" style="display:inline;">
+                                <div class="select is-small">
+                                    <select name="status" onchange="this.form.submit()">
+                                        <option value="A faire" {% if task.status == 'A faire' %}selected{% endif %}>A faire</option>
+                                        <option value="En cours" {% if task.status == 'En cours' %}selected{% endif %}>En cours</option>
+                                        <option value="Terminé" {% if task.status == 'Terminé' %}selected{% endif %}>Terminé</option>
+                                    </select>
+                                </div>
+                            </form>
+                            {{ task.title }} (Created at: {{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }})
+                            <button class="button is-small is-info" onclick="showDatePicker('task', {{ task.id }})" title="Modifier la date">
+                                <span class="icon is-small">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
+                            </button>
+                            <input type="text" id="datepicker-task-{{ task.id }}" class="datepicker" style="display:none;">
+                        </div>
+                        <div>
+                            <form action="/archive/{{ task.id }}" method="POST" style="display:inline;">
+                                <button class="button is-warning is-small" type="submit">Archive</button>
+                            </form>
+                        </div>
+                    </li>
+                    <ul>
+                        {% for subtask in task.subtasks %}
+                        <li class="box subtask-item {% if subtask.status == 'A faire' %}status-a-faire{% elif subtask.status == 'En cours' %}status-en-cours{% elif subtask.status == 'Terminé' %}status-termine{% endif %}">
+                            <div>
+                                <form action="/update_subtask_status/{{ subtask.id }}" method="POST" style="display:inline;">
+                                    <div class="select is-small">
+                                        <select name="status" onchange="this.form.submit()">
+                                            <option value="A faire" {% if subtask.status == 'A faire' %}selected{% endif %}>A faire</option>
+                                            <option value="En cours" {% if subtask.status == 'En cours' %}selected{% endif %}>En cours</option>
+                                            <option value="Terminé" {% if subtask.status == 'Terminé' %}selected{% endif %}>Terminé</option>
+                                        </select>
+                                    </div>
+                                </form>
+                                {{ subtask.title }} (Created at: {{ subtask.created_at.strftime('%Y-%m-%d %H:%M:%S') }})
+                                <button class="button is-small is-info" onclick="showDatePicker('subtask', {{ subtask.id }})" title="Modifier la date">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </span>
+                                </button>
+                                <input type="text" id="datepicker-subtask-{{ subtask.id }}" class="datepicker" style="display:none;">
+                            </div>
+                            <div>
+                                <form action="/archive_subtask/{{ subtask.id }}" method="POST" style="display:inline;">
+                                    <button class="button is-warning is-small" type="submit">Archive</button>
+                                </form>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <form id="subtask-form-{{ task.id }}" class="subtask-form" action="/add_subtask/{{ task.id }}" method="POST">
+                        <div class="field">
+                            <label class="label">New SubTask</label>
+                            <div class="control">
+                                <input class="input" type="text" name="title" placeholder="SubTask title">
+                            </div>
+                        </div>
+                        <div class="control">
+                            <button class="button is-primary" type="submit">Add SubTask</button>
+                        </div>
+                    </form>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.9/flatpickr.min.js"></script>
+    <script>
+        function toggleSubtaskForm(taskId) {
+            var form = document.getElementById('subtask-form-' + taskId);
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        function showDatePicker(type, id) {
+            var inputId = 'datepicker-' + type + '-' + id;
+            var input = document.getElementById(inputId);
+            input.style.display = 'block';
+            flatpickr(input, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                onChange: function(selectedDates, dateStr, instance) {
+                    updateDate(type, id, dateStr);
+                }
+            });
+        }
+
+        function updateDate(type, id, dateStr) {
+            var url = '/update_date/' + type + '/' + id;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ date: dateStr })
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+    <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
+</body>
+</html>
